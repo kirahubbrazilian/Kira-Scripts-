@@ -1,0 +1,154 @@
+-- [[ TORZIN TURBO V22.2 - TWEEN FLIGHT FIX ]] --
+local player = game:GetService("Players").LocalPlayer
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+-- KEYS AUTOMÁTICAS (1 a 50)
+local validKeys = {}
+for i = 1, 50 do validKeys["cachorroguloso" .. i] = true end
+
+local fileName = "TorzinV22.txt"
+local sukunaImg = "rbxassetid://15112101655" 
+
+local function saveKey(k) if writefile then writefile(fileName, k) end end
+local function getSavedKey() if isfile and isfile(fileName) then return readfile(fileName) end return nil end
+
+for _, v in pairs(game.CoreGui:GetChildren()) do
+    if v.Name == "TorzinV22" or v.Name == "KeySys" then v:Destroy() end
+end
+
+local function StartHub()
+    if game.CoreGui:FindFirstChild("KeySys") then game.CoreGui.KeySys:Destroy() end
+
+    local MainGui = Instance.new("ScreenGui")
+    MainGui.Name = "TorzinV22"; MainGui.Parent = game.CoreGui
+
+    local savedPos = nil
+    local infJump = false
+    local hitboxActive = false
+    local reachRange = 40
+
+    -- BOTÃO HUB
+    local OpenBtn = Instance.new("TextButton")
+    OpenBtn.Size = UDim2.new(0, 60, 0, 60); OpenBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+    OpenBtn.Text = "HUB"; OpenBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0); OpenBtn.TextColor3 = Color3.new(1,1,1)
+    OpenBtn.Parent = MainGui; OpenBtn.Draggable = true; OpenBtn.Active = true
+    Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+
+    -- BOTÕES RETANGULARES
+    local function RectBtn(p, t, bg, txtC)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0, 120, 0, 40); b.Position = p; b.Text = t
+        b.BackgroundColor3 = bg; b.TextColor3 = txtC; b.Font = Enum.Font.GothamBold
+        b.Parent = MainGui; b.Draggable = true; b.Active = true
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+        return b
+    end
+
+    local MarkBtn = RectBtn(UDim2.new(0.05, 0, 0.32, 0), "MARCAR (P)", Color3.new(1,1,1), Color3.new(0,0,0))
+    local FlyBtn = RectBtn(UDim2.new(0.05, 0, 0.40, 0), "VOAR (L)", Color3.new(0,0,0), Color3.new(1,1,1))
+
+    -- FUNÇÃO DE MARCAR
+    local function DoMark()
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then 
+            savedPos = hrp.CFrame 
+            MarkBtn.Text = "OK!"
+            task.wait(0.5)
+            MarkBtn.Text = "MARCAR (P)"
+        end
+    end
+
+    -- FUNÇÃO DE VOAR (TWEEN - DESLIZAR)
+    local function DoFly()
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp and savedPos then
+            local distance = (hrp.Position - savedPos.Position).Magnitude
+            local speed = 1000 -- Velocidade extrema
+            local tweenInfo = TweenInfo.new(distance/speed, Enum.EasingStyle.Linear)
+            local tween = TweenService:Create(hrp, tweenInfo, {CFrame = savedPos})
+            tween:Play()
+        end
+    end
+
+    MarkBtn.MouseButton1Click:Connect(DoMark)
+    FlyBtn.MouseButton1Click:Connect(DoFly)
+
+    -- INTERFACE SUKUNA
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 380, 0, 350); Frame.Position = UDim2.new(0.5, -190, 0.5, -175)
+    Frame.BackgroundColor3 = Color3.new(0,0,0); Frame.BackgroundTransparency = 0.2; Frame.Visible = false; Frame.Parent = MainGui
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 20)
+    Instance.new("UIStroke", Frame).Color = Color3.new(1,0,0); Instance.new("UIStroke", Frame).Thickness = 3
+
+    local Sukuna = Instance.new("ImageLabel")
+    Sukuna.Size = UDim2.new(1,0,1,0); Sukuna.Image = sukunaImg; Sukuna.ImageTransparency = 0.4
+    Sukuna.BackgroundTransparency = 1; Sukuna.Parent = Frame; Instance.new("UICorner", Sukuna).CornerRadius = UDim.new(0, 20)
+
+    -- BOTÕES INTERNOS
+    local function IntBtn(t, p, f)
+        local b = Instance.new("TextButton")
+        b.Size = UDim2.new(0.8, 0, 0, 50); b.Position = p; b.Text = t
+        b.BackgroundColor3 = Color3.fromRGB(180, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = 3
+        b.Parent = Frame; b.MouseButton1Click:Connect(function() f(b) end)
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
+    end
+
+    IntBtn("INFINITY JUMP: OFF", UDim2.new(0.1, 0, 0.35, 0), function(s)
+        infJump = not infJump
+        s.Text = "INFINITY JUMP: " .. (infJump and "ON" or "OFF")
+    end)
+
+    IntBtn("COLETAR ITENS: OFF", UDim2.new(0.1, 0, 0.55, 0), function(s)
+        hitboxActive = not hitboxActive
+        s.Text = "COLETAR ITENS: " .. (hitboxActive and "ON" or "OFF")
+    end)
+
+    OpenBtn.MouseButton1Click:Connect(function() Frame.Visible = not Frame.Visible end)
+
+    -- COLETA (FIRETOUCH)
+    RunService.Heartbeat:Connect(function()
+        if hitboxActive and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local myHRP = player.Character.HumanoidRootPart
+            for _, obj in pairs(workspace:GetChildren()) do
+                if (obj:IsA("BasePart") or obj:IsA("Model")) and not game.Players:GetPlayerFromCharacter(obj) and obj.Name ~= player.Name then
+                    local target = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildOfClass("BasePart")) or obj
+                    if target and target:IsA("BasePart") then
+                        if (target.Position - myHRP.Position).Magnitude <= reachRange then
+                            firetouchinterest(myHRP, target, 0)
+                            firetouchinterest(myHRP, target, 1)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- FIX TECLAS (P e L)
+    UIS.InputBegan:Connect(function(input, processed)
+        if processed then return end 
+        if input.KeyCode == Enum.KeyCode.P then DoMark()
+        elseif input.KeyCode == Enum.KeyCode.L then DoFly() end
+    end)
+
+    -- JUMP LOOP
+    RunService.RenderStepped:Connect(function()
+        if infJump and player.Character then
+            local h = player.Character:FindFirstChildOfClass("Humanoid")
+            if h and UIS:IsKeyDown(Enum.KeyCode.Space) then h:ChangeState(3) end
+        end
+    end)
+end
+
+-- LOGIN
+local s = getSavedKey()
+if s and validKeys[s] then StartHub()
+else
+    local K = Instance.new("ScreenGui"); K.Name = "KeySys"; K.Parent = game.CoreGui
+    local F = Instance.new("Frame"); F.Size = UDim2.new(0, 320, 0, 200); F.Position = UDim2.new(0.5, -160, 0.5, -100)
+    F.BackgroundColor3 = Color3.new(0,0,0); F.Parent = K; Instance.new("UIStroke", F).Color = Color3.new(1,0,0)
+    local I = Instance.new("TextBox"); I.Size = UDim2.new(0.8,0,0,45); I.Position = UDim2.new(0.1,0,0.3,0); I.PlaceholderText = "Sua Key..."; I.Parent = F
+    local B = Instance.new("TextButton"); B.Size = UDim2.new(0.6,0,0,40); B.Position = UDim2.new(0.2,0,0.7,0); B.Text = "LOGAR"; B.Parent = F
+    B.MouseButton1Click:Connect(function() if validKeys[I.Text] then saveKey(I.Text); StartHub() else B.Text = "ERRO" end end)
+end
