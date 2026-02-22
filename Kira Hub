@@ -1,151 +1,169 @@
--- [[ KIRA HUB 🩸 - V24 - MOBILE FIXED ]] --
-local player = game:GetService("Players").LocalPlayer
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+-- [[ KIRA PRO 🩸 - CLEAN UI EDITION ]] --
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local LP = Players.LocalPlayer
 
--- KEYS AUTOMÁTICAS (1 a 50)
+-- KEYS (1 a 50)
 local validKeys = {}
-for i = 1, 50 do validKeys["cachorroguloso" .. i] = true end
-
-local fileName = "KiraHub.txt"
-local sukunaImg = "rbxassetid://15112101655" 
-
-local function saveKey(k) if writefile then writefile(fileName, k) end end
-local function getSavedKey() if isfile and isfile(fileName) then return readfile(fileName) end return nil end
-
-for _, v in pairs(game.CoreGui:GetChildren()) do
-    if v.Name == "KiraHub" or v.Name == "KeySys" then v:Destroy() end
-end
+for i = 1, 50 do validKeys["keytogether" .. i] = true end
 
 local function StartHub()
-    if game.CoreGui:FindFirstChild("KeySys") then game.CoreGui.KeySys:Destroy() end
+    local MainGui = Instance.new("ScreenGui", CoreGui)
+    MainGui.Name = "KiraPro_Clean"
 
-    local MainGui = Instance.new("ScreenGui")
-    MainGui.Name = "KiraHub"; MainGui.Parent = game.CoreGui
+    _G.Config = { 
+        Magnet = false, 
+        Range = 30, 
+        InfJump = false, 
+        Speed = 16 
+    }
+    local SavedPos = nil
 
-    local savedPos = nil
-    local infJump = false
-    local hitboxActive = false
-    local reachRange = 40
+    -- ANTI-AFK
+    local VU = game:GetService("VirtualUser")
+    LP.Idled:Connect(function() VU:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame); task.wait(1); VU:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end)
 
-    -- BOTÃO HUB CIRCULAR (MOVÍVEL)
-    local OpenBtn = Instance.new("TextButton")
-    OpenBtn.Size = UDim2.new(0, 60, 0, 60); OpenBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
-    OpenBtn.Text = "KIRA"; OpenBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0); OpenBtn.TextColor3 = Color3.new(1,1,1)
-    OpenBtn.Parent = MainGui; OpenBtn.Draggable = true; OpenBtn.Active = true
-    Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
+    -- BOTÃO ABRIR (LIMPO)
+    local OpenBtn = Instance.new("TextButton", MainGui)
+    OpenBtn.Size = UDim2.new(0, 60, 0, 60)
+    OpenBtn.Position = UDim2.new(0.05, 0, 0.1, 0)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+    OpenBtn.Text = "KIRA"
+    OpenBtn.TextColor3 = Color3.new(1, 1, 1) -- Branco puro
+    OpenBtn.Font = Enum.Font.GothamBold
+    OpenBtn.TextSize = 14
+    OpenBtn.Draggable = true; OpenBtn.Active = true
+    Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1,0)
 
-    -- BOTÕES RETANGULARES (P e L)
-    local function RectBtn(p, t, bg, txtC)
-        local b = Instance.new("TextButton")
-        b.Size = UDim2.new(0, 120, 0, 40); b.Position = p; b.Text = t
-        b.BackgroundColor3 = bg; b.TextColor3 = txtC; b.Font = Enum.Font.GothamBold
-        b.Parent = MainGui; b.Draggable = true; b.Active = true
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 5)
+    -- BOTÕES EXTERNOS (MAIORES E SEM SOMBRA)
+    local function CreateExtBtn(txt, pos, bgClr)
+        local b = Instance.new("TextButton", MainGui)
+        b.Size = UDim2.new(0, 160, 0, 55)
+        b.Position = pos
+        b.BackgroundColor3 = bgClr
+        b.Text = txt
+        b.TextColor3 = Color3.new(1, 1, 1) -- Letras brancas para leitura fácil
+        b.Font = Enum.Font.GothamBold
+        b.TextSize = 14
+        b.Draggable, b.Active = true, true
+        Instance.new("UICorner", b)
         return b
     end
 
-    local MarkBtn = RectBtn(UDim2.new(0.05, 0, 0.32, 0), "MARCAR (P)", Color3.new(1,1,1), Color3.new(0,0,0))
-    local FlyBtn = RectBtn(UDim2.new(0.05, 0, 0.40, 0), "VOAR (L)", Color3.new(0,0,0), Color3.new(1,1,1))
+    local MarkBtn = CreateExtBtn("SALVAR POSIÇÃO", UDim2.new(0.05, 0, 0.25, 0), Color3.fromRGB(0, 0, 0))
+    local FlyBtn = CreateExtBtn("VOAR ATÉ MARCA", UDim2.new(0.05, 0, 0.35, 0), Color3.fromRGB(150, 0, 0))
 
-    -- INTERFACE PRINCIPAL
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0, 380, 0, 380); Frame.Position = UDim2.new(0.5, -190, 0.5, -190)
-    Frame.BackgroundColor3 = Color3.new(0,0,0); Frame.BackgroundTransparency = 0.2; Frame.Visible = false; Frame.Parent = MainGui
-    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 20)
-    Instance.new("UIStroke", Frame).Color = Color3.new(1,0,0); Instance.new("UIStroke", Frame).Thickness = 3
+    -- MENU PRINCIPAL (DESIGN PRETO SÓLIDO)
+    local Main = Instance.new("Frame", MainGui)
+    Main.Size = UDim2.new(0, 260, 0, 420)
+    Main.Position = UDim2.new(0.5, -130, 0.5, -210)
+    Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    Main.Visible = false; Main.Draggable, Main.Active = true, true
+    Instance.new("UICorner", Main)
 
     -- TÍTULO
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 50); Title.Position = UDim2.new(0, 0, 0, 10)
-    Title.Text = "Kira Hub 🩸"; Title.TextColor3 = Color3.new(1,1,1); Title.TextSize = 32
-    Title.Font = Enum.Font.GothamBlack; Title.BackgroundTransparency = 1; Title.Parent = Frame
-    local Stroke = Instance.new("UIStroke", Title)
-    Stroke.Color = Color3.new(0,0,0); Stroke.Thickness = 3
+    local Tt = Instance.new("TextLabel", Main)
+    Tt.Size = UDim2.new(1, 0, 0, 50)
+    Tt.Text = "KIRA PRO 🩸"; Tt.TextColor3 = Color3.new(1,1,1)
+    Tt.Font = Enum.Font.GothamBlack; Tt.TextSize = 18; Tt.BackgroundTransparency = 1
 
-    local Sukuna = Instance.new("ImageLabel")
-    Sukuna.Size = UDim2.new(1,0,1,0); Sukuna.Image = sukunaImg; Sukuna.ImageTransparency = 0.4
-    Sukuna.BackgroundTransparency = 1; Sukuna.Parent = Frame; Instance.new("UICorner", Sukuna).CornerRadius = UDim.new(0, 20)
-
-    -- FUNÇÕES P e L
-    local function DoMark()
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then savedPos = hrp.CFrame; MarkBtn.Text = "OK!"; task.wait(0.5); MarkBtn.Text = "MARCAR (P)" end
-    end
-
+    -- FUNÇÃO VOO
     local function DoFly()
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp and savedPos then
-            local dist = (hrp.Position - savedPos.Position).Magnitude
-            TweenService:Create(hrp, TweenInfo.new(dist/1000, Enum.EasingStyle.Linear), {CFrame = savedPos}):Play()
+        if SavedPos and LP.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LP.Character.HumanoidRootPart
+            local dist = (hrp.Position - SavedPos.Position).Magnitude
+            TweenService:Create(hrp, TweenInfo.new(dist/350, Enum.EasingStyle.Linear), {CFrame = SavedPos}):Play()
         end
     end
 
-    MarkBtn.MouseButton1Click:Connect(DoMark)
+    MarkBtn.MouseButton1Click:Connect(function()
+        if LP.Character:FindFirstChild("HumanoidRootPart") then
+            SavedPos = LP.Character.HumanoidRootPart.CFrame
+            MarkBtn.Text = "POSIÇÃO SALVA!"
+            task.wait(1); MarkBtn.Text = "SALVAR POSIÇÃO"
+        end
+    end)
     FlyBtn.MouseButton1Click:Connect(DoFly)
 
-    -- BOTÕES INTERNOS
-    local function IntBtn(t, p, f)
-        local b = Instance.new("TextButton")
-        b.Size = UDim2.new(0.8, 0, 0, 50); b.Position = p; b.Text = t
-        b.BackgroundColor3 = Color3.fromRGB(180, 0, 0); b.TextColor3 = Color3.new(1,1,1); b.Font = 3
-        b.Parent = Frame; b.MouseButton1Click:Connect(function() f(b) end)
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
+    -- BOTÕES INTERNOS (ESTILO LISTA)
+    local function AddBtn(txt, pos, f)
+        local b = Instance.new("TextButton", Main)
+        b.Size = UDim2.new(0.9, 0, 0, 45); b.Position = pos
+        b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        b.Text = txt; b.TextColor3 = Color3.new(1, 1, 1)
+        b.Font = Enum.Font.GothamMedium; b.TextSize = 14
+        Instance.new("UICorner", b)
+        b.MouseButton1Click:Connect(function() f(b) end)
     end
 
-    IntBtn("INFINITY JUMP: OFF", UDim2.new(0.1, 0, 0.4, 0), function(s)
-        infJump = not infJump; s.Text = "INFINITY JUMP: " .. (infJump and "ON" or "OFF")
+    AddBtn("PULO INFINITO: OFF", UDim2.new(0.05, 0, 0.18, 0), function(s)
+        _G.Config.InfJump = not _G.Config.InfJump
+        s.Text = "PULO INFINITO: " .. (_G.Config.InfJump and "ON" or "OFF")
+        s.BackgroundColor3 = _G.Config.InfJump and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(40, 40, 40)
     end)
 
-    IntBtn("COLETAR ITENS: OFF", UDim2.new(0.1, 0, 0.6, 0), function(s)
-        hitboxActive = not hitboxActive; s.Text = "COLETAR ITENS: " .. (hitboxActive and "ON" or "OFF")
+    local SpeedInput = Instance.new("TextBox", Main)
+    SpeedInput.Size = UDim2.new(0.9, 0, 0, 45); SpeedInput.Position = UDim2.new(0.05, 0, 0.32, 0)
+    SpeedInput.PlaceholderText = "Digite a Velocidade"; SpeedInput.Text = "50"
+    SpeedInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25); SpeedInput.TextColor3 = Color3.new(1, 1, 1)
+    SpeedInput.Font = Enum.Font.Gotham; SpeedInput.TextSize = 14
+    Instance.new("UICorner", SpeedInput)
+    
+    AddBtn("APLICAR VELOCIDADE", UDim2.new(0.05, 0, 0.45, 0), function()
+        _G.Config.Speed = tonumber(SpeedInput.Text) or 16
     end)
 
-    OpenBtn.MouseButton1Click:Connect(function() Frame.Visible = not Frame.Visible end)
+    AddBtn("MAGNET (COLETAR): OFF", UDim2.new(0.05, 0, 0.60, 0), function(s)
+        _G.Config.Magnet = not _G.Config.Magnet
+        s.Text = "MAGNET: " .. (_G.Config.Magnet and "ON" or "OFF")
+        s.BackgroundColor3 = _G.Config.Magnet and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(40, 40, 40)
+    end)
 
-    -- COLETOR
+    AddBtn("FLY GUI V3", UDim2.new(0.05, 0, 0.80, 0), function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+    end)
+
+    OpenBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+
+    -- LOGICA DE MOVIMENTO
+    RunService.Stepped:Connect(function()
+        if LP.Character and LP.Character:FindFirstChild("Humanoid") then
+            LP.Character.Humanoid.WalkSpeed = _G.Config.Speed
+        end
+    end)
+
+    UIS.JumpRequest:Connect(function()
+        if _G.Config.InfJump and LP.Character:FindFirstChildOfClass("Humanoid") then
+            LP.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end
+    end)
+
     RunService.Heartbeat:Connect(function()
-        if hitboxActive and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local myHRP = player.Character.HumanoidRootPart
-            for _, obj in pairs(workspace:GetChildren()) do
-                if (obj:IsA("BasePart") or obj:IsA("Model")) and not game.Players:GetPlayerFromCharacter(obj) and obj.Name ~= player.Name then
-                    local target = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildOfClass("BasePart")) or obj
-                    if target and target:IsA("BasePart") and (target.Position - myHRP.Position).Magnitude <= reachRange then
-                        firetouchinterest(myHRP, target, 0); firetouchinterest(myHRP, target, 1)
+        if _G.Config.Magnet and LP.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LP.Character.HumanoidRootPart
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("TouchTransmitter") and v.Parent and v.Parent:IsA("BasePart") then
+                    if (hrp.Position - v.Parent.Position).Magnitude <= _G.Config.Range then
+                        firetouchinterest(hrp, v.Parent, 0); firetouchinterest(hrp, v.Parent, 1)
                     end
                 end
             end
         end
     end)
-
-    -- FIX INFINITE JUMP PARA MOBILE
-    UIS.JumpRequest:Connect(function()
-        if infJump and player.Character then
-            local hum = player.Character:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum:ChangeState(Enum.HumanoidStateType.Jumping)
-            end
-        end
-    end)
-
-    -- TECLAS (Para quando usar teclado no celular)
-    UIS.InputBegan:Connect(function(input, processed)
-        if processed then return end 
-        if input.KeyCode == Enum.KeyCode.P then DoMark() elseif input.KeyCode == Enum.KeyCode.L then DoFly() end
-    end)
 end
 
--- LOGIN
-local s = getSavedKey()
-if s and validKeys[s] then StartHub()
-else
-    local K = Instance.new("ScreenGui"); K.Name = "KeySys"; K.Parent = game.CoreGui
-    local F = Instance.new("Frame"); F.Size = UDim2.new(0, 320, 0, 220); F.Position = UDim2.new(0.5, -160, 0.5, -110)
-    F.BackgroundColor3 = Color3.new(0,0,0); F.Parent = K; Instance.new("UIStroke", F).Color = Color3.new(1,0,0)
-    local T = Instance.new("TextLabel"); T.Size = UDim2.new(1,0,0,50); T.Text = "KIRA HUB - LOGIN"; T.TextColor3 = Color3.new(1,1,1); T.BackgroundTransparency = 1; T.Parent = F; Instance.new("UIStroke", T).Thickness = 2
-    local I = Instance.new("TextBox"); I.Size = UDim2.new(0.8,0,0,45); I.Position = UDim2.new(0.1,0,0.35,0); I.PlaceholderText = "Insere a Key..."; I.Parent = F
-    local B = Instance.new("TextButton"); B.Size = UDim2.new(0.6,0,0,40); B.Position = UDim2.new(0.2,0,0.75,0); B.Text = "ENTRAR"; B.Parent = F
-    B.MouseButton1Click:Connect(function() if validKeys[I.Text] then saveKey(I.Text); StartHub() else B.Text = "KEY INVÁLIDA" end end)
-end
-
+-- LOGIN SIMPLES
+local KeyGui = Instance.new("ScreenGui", CoreGui)
+local KF = Instance.new("Frame", KeyGui)
+KF.Size = UDim2.new(0, 300, 0, 180); KF.Position = UDim2.new(0.5, -150, 0.5, -90)
+KF.BackgroundColor3 = Color3.new(0,0,0)
+local TI = Instance.new("TextBox", KF)
+TI.Size = UDim2.new(0.8, 0, 0, 40); TI.Position = UDim2.new(0.1, 0, 0.3, 0); TI.PlaceholderText = "Digite sua Key..."
+local B = Instance.new("TextButton", KF)
+B.Size = UDim2.new(0.6, 0, 0, 40); B.Position = UDim2.new(0.2, 0, 0.7, 0); B.Text = "ENTRAR"
+B.MouseButton1Click:Connect(function()
+    if validKeys[TI.Text] then KeyGui:Destroy(); StartHub() else B.Text = "KEY INCORRETA" end
+end)
